@@ -1913,6 +1913,57 @@ void chaos_mesh( const Router *r, const Flit *f,
 }
 
 //=============================================================
+// DAT575 Lab 2: template for a routing function on the mesh.
+//
+// Copy the function into booksim2/src/routefunc.cpp and register it in
+// InitializeRoutingMap. A routing function for the mesh is named <name>_mesh;
+// run it with routing_function=<name>.
+//
+// Coordinates: node id is at x = id % gK, y = id / gK.
+// Output ports: 0 = east (+x), 1 = west (-x), 2 = north (+y), 3 = south (-y),
+//               2*gN = the local node (ejection).
+
+void rmin_mesh( const Router *r, const Flit *f, int in_channel,
+                OutputSet *outputs, bool inject )
+{
+  outputs->Clear( );
+  if ( inject ) {                            // at the source: any VC
+    outputs->AddRange( -1, 0, gNumVCs-1 );
+    return;
+  }
+  int cur = r->GetID( );
+  if ( cur == f->dest ) {                    // arrived: eject
+    outputs->AddRange( 2*gN, 0, gNumVCs-1 );
+    return;
+  }
+  int cx = cur % gK,     cy = cur / gK;      // this router
+  int tx = f->dest % gK, ty = f->dest / gK;  // destination
+  int out_port = -1;
+  // your code: choose out_port
+  int dx = tx - cx;
+  int dy = ty - cy;
+  int vc_xy[2] = {-1, -1};
+  if (dx > 0) {
+    vc_xy[0] = 0; // (+x)
+  } else if (dx < 0) {
+    vc_xy[0] = 1; // (-x)
+  }
+  if (dy > 0) {
+    vc_xy[1] = 2; // (+y)
+  } else if (dy < 0) {
+    vc_xy[1] = 3; // (-y)
+  }
+  if (vc_xy[0] == -1) {
+    out_port = vc_xy[1]; // at dest x
+  } else if (vc_xy[1] == -1) {
+    out_port = vc_xy[0]; // at dest y
+  } else {
+    out_port = vc_xy[RandomInt(1)]; // take either x or y dir
+  }
+  outputs->AddRange( out_port, 0, gNumVCs-1 );
+}
+
+//=============================================================
 
 void InitializeRoutingMap( const Configuration & config )
 {
@@ -1996,4 +2047,8 @@ void InitializeRoutingMap( const Configuration & config )
 
   gRoutingFunctionMap["chaos_mesh"]  = &chaos_mesh;
   gRoutingFunctionMap["chaos_torus"] = &chaos_torus;
+
+  // ===================================================
+  // DAT575
+  gRoutingFunctionMap["rmin_mesh"] = &rmin_mesh;
 }
