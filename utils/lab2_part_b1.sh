@@ -19,8 +19,8 @@ hop_count(){
 }
 
 INJ=0.05
-#run "uniform" "dor"  $INJ & 
-#run "uniform" "rmin" $INJ &
-#wait
-hop_count "uniform" "dor" $INJ 
-hop_count "uniform" "rmin" $INJ 
+run "uniform" "dor"  $INJ &
+run "uniform" "rmin" $INJ &
+wait
+hop_count "uniform" "dor" $INJ
+hop_count "uniform" "rmin" $INJ

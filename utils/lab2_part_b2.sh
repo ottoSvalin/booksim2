@@ -12,3 +12,4 @@ run(){
 INJ=0.3
 run "uniform" "dor"  $INJ & 
 run "uniform" "rmin" $INJ &
+wait

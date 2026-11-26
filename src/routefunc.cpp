@@ -1942,25 +1942,71 @@ void rmin_mesh( const Router *r, const Flit *f, int in_channel,
   // your code: choose out_port
   int dx = tx - cx;
   int dy = ty - cy;
-  int vc_xy[2] = {-1, -1};
+  int avail_ports[2] = {-1, -1};
   if (dx > 0) {
-    vc_xy[0] = 0; // (+x)
+    avail_ports[0] = 0; // (+x)
   } else if (dx < 0) {
-    vc_xy[0] = 1; // (-x)
+    avail_ports[0] = 1; // (-x)
   }
   if (dy > 0) {
-    vc_xy[1] = 2; // (+y)
+    avail_ports[1] = 2; // (+y)
   } else if (dy < 0) {
-    vc_xy[1] = 3; // (-y)
+    avail_ports[1] = 3; // (-y)
   }
-  if (vc_xy[0] == -1) {
-    out_port = vc_xy[1]; // at dest x
-  } else if (vc_xy[1] == -1) {
-    out_port = vc_xy[0]; // at dest y
+  if (avail_ports[0] == -1) {
+    out_port = avail_ports[1]; // at dest x
+  } else if (avail_ports[1] == -1) {
+    out_port = avail_ports[0]; // at dest y
   } else {
-    out_port = vc_xy[RandomInt(1)]; // take either x or y dir
+    out_port = avail_ports[RandomInt(1)]; // take either x or y dir
   }
   outputs->AddRange( out_port, 0, gNumVCs-1 );
+}
+
+void escape_vc_mesh( const Router *r, const Flit *f, int in_channel,
+                OutputSet *outputs, bool inject )
+{
+  outputs->Clear( );
+  if ( inject ) {                            // at the source: any VC
+    outputs->AddRange( -1, 0, gNumVCs-1 );
+    return;
+  }
+  int cur = r->GetID( );
+  if ( cur == f->dest ) {                    // arrived: eject
+    outputs->AddRange( 2*gN, 0, gNumVCs-1 );
+    return;
+  }
+  int cx = cur % gK,     cy = cur / gK;      // this router
+  int tx = f->dest % gK, ty = f->dest / gK;  // destination
+  int out_port = -1;
+  // your code: choose out_port
+  int dx = tx - cx;
+  int dy = ty - cy;
+  int rmin_port[2] = {-1, -1};
+  int dor_port; // dor YX
+  if (dx > 0) {
+    rmin_port[0] = 0; // (+x)
+    dor_port = 0;
+  } else if (dx < 0) {
+    rmin_port[0] = 1; // (-x)
+    dor_port = 1;
+  }
+  if (dy > 0) {
+    rmin_port[1] = 2; // (+y)
+    dor_port = 2;
+  } else if (dy < 0) {
+    rmin_port[1] = 3; // (-y)
+    dor_port = 3;
+  }
+  if (rmin_port[0] == -1) {
+    out_port = rmin_port[1]; // at dest x
+  } else if (rmin_port[1] == -1) {
+    out_port = rmin_port[0]; // at dest y
+  } else {
+    out_port = rmin_port[RandomInt(1)]; // take either x or y dir
+  }
+  outputs->AddRange( out_port, 1, gNumVCs-1 , 0);
+  outputs->AddRange( dor_port, 0, 0 , 1); // Escape VC
 }
 
 //=============================================================
@@ -2051,4 +2097,5 @@ void InitializeRoutingMap( const Configuration & config )
   // ===================================================
   // DAT575
   gRoutingFunctionMap["rmin_mesh"] = &rmin_mesh;
+  gRoutingFunctionMap["escape_vc_mesh"] = &escape_vc_mesh;
 }
