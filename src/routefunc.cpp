@@ -1983,7 +1983,7 @@ void escape_vc_mesh( const Router *r, const Flit *f, int in_channel,
   int dx = tx - cx;
   int dy = ty - cy;
   int rmin_port[2] = {-1, -1};
-  int dor_port; // dor YX
+  int dor_port = -1; // dor YX
   if (dx > 0) {
     rmin_port[0] = 0; // (+x)
     dor_port = 0;
@@ -2005,8 +2005,8 @@ void escape_vc_mesh( const Router *r, const Flit *f, int in_channel,
   } else {
     out_port = rmin_port[RandomInt(1)]; // take either x or y dir
   }
-  outputs->AddRange( out_port, 1, gNumVCs-1 , 0);
-  outputs->AddRange( dor_port, 0, 0 , 1); // Escape VC
+  outputs->AddRange( out_port, 1, gNumVCs-1 , 1); // note: lowest prio == 0
+  outputs->AddRange( dor_port, 0, 0 , 0); // Escape VC
 }
 
 //=============================================================
